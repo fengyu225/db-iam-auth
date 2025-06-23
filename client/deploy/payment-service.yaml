@@ -1,0 +1,75 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: payment-service
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: default
+  namespace: payment-service
+  annotations:
+    eks.amazonaws.com/role-arn: arn:aws:iam::072422391281:role/db-iam-auth-dev-payment-service-workload
+---
+apiVersion: secrets-store.csi.x-k8s.io/v1
+kind: SecretProviderClass
+metadata:
+  name: payment-service-spire-svid
+  namespace: payment-service
+spec:
+  provider: spire
+  parameters:
+    trustDomain: "example.org"
+    objects: |
+      - objectName: "x509"
+        type: "x509-svid"
+        filePermission: 0640
+        paths:
+          - "x509/cert.pem"
+          - "x509/key.pem"
+          - "x509/bundle.pem"
+      - objectName: "sts-jwt"
+        type: "jwt-svid"
+        filePermission: 0640
+        audience:
+          - "sts.amazonaws.com"
+        paths:
+          - "jwt/sts.token"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: payment-service
+  namespace: payment-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: payment-service
+  template:
+    metadata:
+      labels:
+        app: payment-service
+        spiffe.io/spire-managed-identity: "true"
+    spec:
+      serviceAccountName: default
+      containers:
+        - name: app
+          image: amazon/aws-cli:latest
+          command: ["sh", "-c", "sleep 1000000"]
+          volumeMounts:
+            - name: spire-svids
+              mountPath: "/run/spire"
+              readOnly: true
+          env:
+            - name: AWS_ROLE_ARN
+              value: arn:aws:iam::072422391281:role/db-iam-auth-dev-payment-service-workload
+            - name: AWS_WEB_IDENTITY_TOKEN_FILE
+              value: /run/spire/jwt/sts.token
+      volumes:
+        - name: spire-svids
+          csi:
+            driver: secrets-store.csi.k8s.io
+            readOnly: true
+            volumeAttributes:
+              secretProviderClass: "payment-service-spire-svid"

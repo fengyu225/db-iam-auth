@@ -174,6 +174,50 @@ resource "aws_s3_bucket_versioning" "spire_bundle" {
   }
 }
 
+resource "aws_s3_object" "openid_configuration" {
+  bucket       = aws_s3_bucket.spire_bundle.id
+  key          = ".well-known/openid-configuration"
+  content_type = "application/json"
+
+  content = jsonencode({
+    issuer = "https://${aws_s3_bucket.spire_bundle.bucket}.s3.${data.aws_region.current.name}.amazonaws.com"
+    jwks_uri = "https://${aws_s3_bucket.spire_bundle.bucket}.s3.${data.aws_region.current.name}.amazonaws.com/keys"
+    response_types_supported = [
+      "id_token"
+    ]
+    subject_types_supported = [
+      "public"
+    ]
+    id_token_signing_alg_values_supported = [
+      "RS256",
+      "ES256"
+    ]
+    token_endpoint_auth_methods_supported = [
+      "none"
+    ]
+    claims_supported = [
+      "sub",
+      "aud",
+      "exp",
+      "iat",
+      "iss",
+      "jti"
+    ]
+    scopes_supported = [
+      "openid"
+    ]
+  })
+
+  tags = merge(local.common_tags, {
+    Name = "${local.cluster_name}-openid-config"
+  })
+
+  depends_on = [
+    aws_s3_bucket_policy.spire_bundle,
+    aws_s3_bucket_cors_configuration.spire_bundle
+  ]
+}
+
 module "eks" {
   source = "./modules/eks"
 
@@ -196,9 +240,9 @@ module "iam" {
   source = "./modules/iam"
 
   cluster_name           = local.cluster_name
-  oidc_provider_url      = module.eks.oidc_provider_url
   oidc_provider_arn      = module.eks.oidc_provider_arn
   account_id             = data.aws_caller_identity.current.account_id
+  region                 = data.aws_region.current.name
   spire_bundle_s3_bucket = aws_s3_bucket.spire_bundle.bucket
 
   workload_configs = var.workload_configs

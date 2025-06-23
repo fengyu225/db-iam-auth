@@ -3,11 +3,6 @@ variable "cluster_name" {
   type        = string
 }
 
-variable "oidc_provider_url" {
-  description = "URL of the EKS OIDC provider"
-  type        = string
-}
-
 variable "oidc_provider_arn" {
   description = "ARN of the EKS OIDC provider"
   type        = string
@@ -15,6 +10,11 @@ variable "oidc_provider_arn" {
 
 variable "account_id" {
   description = "AWS Account ID"
+  type        = string
+}
+
+variable "region" {
+  description = "AWS region"
   type        = string
 }
 

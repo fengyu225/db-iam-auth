@@ -1,8 +1,8 @@
 resource "aws_iam_openid_connect_provider" "spire" {
-  url = "https://${var.spire_bundle_s3_bucket}.s3.amazonaws.com"
+  url = "https://${var.spire_bundle_s3_bucket}.s3.${var.region}.amazonaws.com"
 
   client_id_list = [
-    "workload-identity"
+    "sts.amazonaws.com"
   ]
 
   thumbprint_list = ["9e99a48a9960b14926bb7f3b02e22da2b0ab7280"]
@@ -77,12 +77,6 @@ resource "aws_iam_role" "spire_server" {
         Federated = var.oidc_provider_arn
       }
       Action = "sts:AssumeRoleWithWebIdentity"
-      Condition = {
-        StringEquals = {
-          "${replace(var.oidc_provider_url, "https://", "")}:sub" = "system:serviceaccount:spire:spire-server"
-          "${replace(var.oidc_provider_url, "https://", "")}:aud" = "sts.amazonaws.com"
-        }
-      }
     }]
   })
 

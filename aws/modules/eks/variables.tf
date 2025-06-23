@@ -21,13 +21,13 @@ variable "private_subnets" {
 variable "kubernetes_version" {
   description = "Kubernetes version to use for the EKS cluster"
   type        = string
-  default     = "1.31"
+  default     = "1.32"
 }
 
 variable "node_instance_type" {
   description = "Instance type for EKS nodes"
   type        = string
-  default     = "t3.small"
+  default     = "t3.xlarge"
 }
 
 variable "desired_capacity" {

@@ -31,7 +31,7 @@ variable "availability_zones" {
 variable "eks_node_instance_type" {
   description = "Instance type for EKS nodes"
   type        = string
-  default     = "t3.small"
+  default     = "t3.xlarge"
 }
 
 variable "eks_desired_capacity" {
@@ -71,7 +71,7 @@ variable "workload_configs" {
   }))
   default = {
     payment_service = {
-      spiffe_id = "spiffe://yufeng.live/ns/payment-service/sa/default"
+      spiffe_id = "spiffe://example.org/ns/payment-service/sa/default"
       database_access = {
         elasticsearch = "payment-es-user"
         kafka         = "payment-kafka-user"
@@ -79,7 +79,7 @@ variable "workload_configs" {
       }
     }
     order_service = {
-      spiffe_id = "spiffe://yufeng.live/ns/order-service/sa/default"
+      spiffe_id = "spiffe://example.org/ns/order-service/sa/default"
       database_access = {
         elasticsearch = "order-es-user"
         cassandra     = "order-cassandra-user"
